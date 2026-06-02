@@ -37,7 +37,7 @@ CSS_GLOBAL = """
         max-width: 1200px;
     }
 
-    /* Padronizar fontes no expander */
+    /* Esconder label do expander */
     .streamlit-expanderHeader {
         font-size: 0px !important;
         padding: 0px !important;
@@ -49,11 +49,6 @@ CSS_GLOBAL = """
     .streamlit-expanderContent {
         border: none !important;
         padding: 0px !important;
-    }
-
-    /* Forçar tamanho de fonte uniforme */
-    .stMarkdown p, .stMarkdown div, .stMarkdown span {
-        font-size: 14px !important;
     }
 </style>
 """
@@ -129,7 +124,7 @@ def parse_json_dict(data, field):
 # RENDERIZAR CARD DE CONTA
 # ==========================================================
 def render_account_card(account):
-    """Card estilo marketplace - compacto e elegante."""
+    """Card visualmente organizado com imagem transparente."""
     name = account.get("name", "Conta sem nome")
     server = account.get("server", "-")
     status = account.get("status", "-")
@@ -158,98 +153,104 @@ def render_account_card(account):
     status_color = STATUS_COLORS.get(status, "#334155")
 
     with st.container():
-        # Card container
-        st.markdown("""
+        # Card principal usando HTML para controle total do layout
+        card_html = f"""
         <div style="background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 12px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-        </div>
-        """, unsafe_allow_html=True)
+            <div style="display: flex; padding: 16px; gap: 16px;">
+        """
 
-        # Layout: Imagem pequena | Info | Preço
+        # Imagem (lado esquerdo, sem fundo escuro)
         if cover_b64:
-            cols = st.columns([1, 3, 1])
+            card_html += f"""
+                <div style="flex-shrink: 0; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center;">
+                    <img src="data:image/png;base64,{cover_b64}" style="max-width: 140px; max-height: 140px; object-fit: contain; border-radius: 8px;" alt="Capa">
+                </div>
+            """
         else:
-            cols = st.columns([4, 1])
+            card_html += """
+                <div style="flex-shrink: 0; width: 140px; height: 140px; background: #252538; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 32px;">📷</span>
+                </div>
+            """
 
-        # IMAGEM PEQUENA (thumbnail)
-        if cover_b64:
-            with cols[0]:
-                try:
-                    img_data = base64.b64decode(cover_b64)
-                    st.image(img_data, width=140)
-                except Exception:
-                    st.markdown("<div style='width:140px;height:140px;background:#252538;border-radius:8px;display:flex;align-items:center;justify-content:center;'><span style='font-size:32px;'>📷</span></div>", unsafe_allow_html=True)
+        # Info (lado direito)
+        card_html += f"""
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div>
+                                <span style="display: inline-block; background: {status_color}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">
+                                    {status}
+                                </span>
+                                <h3 style="margin: 0; color: #F8FAFC; font-weight: 700; font-size: 20px;">{name}</h3>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #10B981; font-size: 24px; font-weight: 800;">{price}</div>
+                            </div>
+                        </div>
 
-        # INFO
-        with cols[-2]:
-            st.markdown(f"""
-            <div style="display:inline-block;background:{status_color};color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">
-                {status}
-            </div>
-            """, unsafe_allow_html=True)
+                        <p style="margin: 0 0 8px 0; color: #94A3B8; font-size: 13px;">
+                            🌐 {server} • ⭐ AR {ar} • WL {wl}
+                        </p>
+        """
 
-            st.markdown(f"<h4 style='margin:0;color:#F8FAFC;font-weight:700;'>{name}</h4>", unsafe_allow_html=True)
-            st.markdown(f"<p style='margin:4px 0;color:#94A3B8;font-size:13px;'>🌐 {server} • ⭐ AR {ar} • WL {wl}</p>", unsafe_allow_html=True)
+        # Tags
+        if tags:
+            tag_list = [t.strip() for t in tags.split(",") if t.strip()][:3]
+            tags_html = " ".join([f'<span style="background: rgba(124,58,237,0.2); color: #A78BFA; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-right: 4px;">{t}</span>' for t in tag_list])
+            card_html += f"<div style='margin-bottom: 8px;'>{tags_html}</div>"
 
-            if tags:
-                tag_list = [t.strip() for t in tags.split(",") if t.strip()][:3]
-                tags_html = " ".join([f'<span style="background:rgba(124,58,237,0.2);color:#A78BFA;padding:2px 8px;border-radius:4px;font-size:11px;margin-right:4px;">{t}</span>' for t in tag_list])
-                st.markdown(tags_html, unsafe_allow_html=True)
+        # Personagens
+        if characters:
+            char_html = ""
+            for char in characters[:5]:
+                el = char.get("element", "")
+                el_icon = ELEMENT_ICONS.get(el, "✦")
+                c_name = char.get("character_name", "?")
+                c_const = char.get("constellation", "")
+                char_html += f'<span style="margin-right: 12px; font-size: 13px;">{el_icon} <strong style="color: #F8FAFC;">{c_name}</strong> <span style="color: #64748B; font-size: 11px;">{c_const}</span></span>'
+            if len(characters) > 5:
+                char_html += f'<span style="color: #64748B; font-size: 11px;">+{len(characters)-5}</span>'
+            card_html += f"<p style='margin: 0;'>{char_html}</p>"
 
-            if characters:
-                char_html = ""
-                for char in characters[:5]:
-                    el = char.get("element", "")
-                    el_icon = ELEMENT_ICONS.get(el, "✦")
-                    c_name = char.get("character_name", "?")
-                    c_const = char.get("constellation", "")
-                    char_html += f'<span style="margin-right:10px;font-size:13px;">{el_icon} <strong style="color:#F8FAFC;">{c_name}</strong> <span style="color:#64748B;font-size:11px;">{c_const}</span></span>'
-                if len(characters) > 5:
-                    char_html += f'<span style="color:#64748B;font-size:11px;">+{len(characters)-5}</span>'
-                st.markdown(f"<p style='margin:8px 0 0 0;'>{char_html}</p>", unsafe_allow_html=True)
-
-        # PREÇO
-        with cols[-1]:
-            st.markdown(f"""
-            <div style="text-align:right;">
-                <div style="color:#10B981;font-size:24px;font-weight:800;">
-                    {price}
+        card_html += """
+                    </div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+        </div>
+        """
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown(card_html, unsafe_allow_html=True)
 
-        # Expander para detalhes - TUDO COM FONTE PADRÃO
+        # Expander para detalhes
         with st.expander("🔍 Ver detalhes"):
-            # Recursos - usando texto simples em vez de st.metric
+            # Recursos
             st.markdown("**📦 Recursos**")
-
-            # Grid de recursos com texto uniforme
             recursos_html = f"""
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0;">
-                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
-                    <div style="font-size:14px;color:#94A3B8;">💎 Primogems</div>
-                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{primogems:,}</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0;">
+                <div style="background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 14px; color: #94A3B8;">💎 Primogems</div>
+                    <div style="font-size: 18px; color: #F8FAFC; font-weight: 700;">{primogems:,}</div>
                 </div>
-                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
-                    <div style="font-size:14px;color:#94A3B8;">🌠 Limitados</div>
-                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{intertwined}</div>
+                <div style="background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 14px; color: #94A3B8;">🌠 Limitados</div>
+                    <div style="font-size: 18px; color: #F8FAFC; font-weight: 700;">{intertwined}</div>
                 </div>
-                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
-                    <div style="font-size:14px;color:#94A3B8;">⭐ Padrão</div>
-                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{acquaint}</div>
+                <div style="background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 14px; color: #94A3B8;">⭐ Padrão</div>
+                    <div style="font-size: 18px; color: #F8FAFC; font-weight: 700;">{acquaint}</div>
                 </div>
-                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
-                    <div style="font-size:14px;color:#94A3B8;">✨ Starglitter</div>
-                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{starglitter}</div>
+                <div style="background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 14px; color: #94A3B8;">✨ Starglitter</div>
+                    <div style="font-size: 18px; color: #F8FAFC; font-weight: 700;">{starglitter}</div>
                 </div>
-                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
-                    <div style="font-size:14px;color:#94A3B8;">🌙 Stardust</div>
-                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{stardust}</div>
+                <div style="background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 14px; color: #94A3B8;">🌙 Stardust</div>
+                    <div style="font-size: 18px; color: #F8FAFC; font-weight: 700;">{stardust}</div>
                 </div>
-                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
-                    <div style="font-size:14px;color:#94A3B8;">⚡ Resina</div>
-                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{resin}</div>
+                <div style="background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 14px; color: #94A3B8;">⚡ Resina</div>
+                    <div style="font-size: 18px; color: #F8FAFC; font-weight: 700;">{resin}</div>
                 </div>
             </div>
             """
@@ -257,21 +258,21 @@ def render_account_card(account):
 
             st.divider()
 
-            # Progresso - texto uniforme
+            # Progresso
             st.markdown("**📊 Progresso**")
             progresso_html = f"""
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0;">
-                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
-                    <div style="font-size:14px;color:#94A3B8;">🎂 Aniversário</div>
-                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{birthday}</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0;">
+                <div style="background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 14px; color: #94A3B8;">🎂 Aniversário</div>
+                    <div style="font-size: 18px; color: #F8FAFC; font-weight: 700;">{birthday}</div>
                 </div>
-                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
-                    <div style="font-size:14px;color:#94A3B8;">🏰 Abismo</div>
-                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{abyss}</div>
+                <div style="background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 14px; color: #94A3B8;">🏰 Abismo</div>
+                    <div style="font-size: 18px; color: #F8FAFC; font-weight: 700;">{abyss}</div>
                 </div>
-                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
-                    <div style="font-size:14px;color:#94A3B8;">📈 Andar máx.</div>
-                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{abyss_floor}</div>
+                <div style="background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 14px; color: #94A3B8;">📈 Andar máx.</div>
+                    <div style="font-size: 18px; color: #F8FAFC; font-weight: 700;">{abyss_floor}</div>
                 </div>
             </div>
             """
@@ -292,14 +293,14 @@ def render_account_card(account):
                     wname = w.get("weapon_name", "?")
                     wchar = w.get("character_name", "-")
                     wref = w.get("refinement", "R1")
-                    st.markdown(f"<p style='font-size:14px;margin:4px 0;'>• <strong>{wname}</strong> ({wchar}) {wref}</p>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='font-size: 14px; margin: 4px 0;'>• <strong>{wname}</strong> ({wchar}) {wref}</p>", unsafe_allow_html=True)
                 if len(weapons) > 8:
-                    st.markdown(f"<p style='font-size:14px;color:#64748B;'>+{len(weapons)-8} armas</p>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='font-size: 14px; color: #64748B;'>+{len(weapons)-8} armas</p>", unsafe_allow_html=True)
 
             # Observações
             if extra:
                 st.markdown("**📝 Observações**")
-                st.markdown(f"<div style='background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:12px;font-size:14px;color:#CBD5E1;white-space:pre-wrap;'>{extra}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 8px; padding: 12px; font-size: 14px; color: #CBD5E1; white-space: pre-wrap;'>{extra}</div>", unsafe_allow_html=True)
 
         st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
