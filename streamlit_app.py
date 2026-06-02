@@ -4,10 +4,9 @@ from datetime import datetime
 
 import requests
 import streamlit as st
-import streamlit.components.v1 as components
 
 # ==========================================================
-# CONFIGURAÇÃO DO SUPABASE (preencher ou usar secrets)
+# CONFIGURAÇÃO DO SUPABASE
 # ==========================================================
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", os.getenv("SUPABASE_URL", ""))
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", os.getenv("SUPABASE_KEY", ""))
@@ -19,186 +18,44 @@ HEADERS = {
 }
 
 # ==========================================================
-# CSS CUSTOMIZADO - TEMA ESCURO GENSHIN
+# CSS CUSTOMIZADO MINIMAL
 # ==========================================================
 CUSTOM_CSS = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-    html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
-    }
-
     .main {
         background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
     }
-
-    .account-card {
-        background: rgba(30, 41, 59, 0.85);
-        backdrop-filter: blur(10px);
-        border: 1px solid #334155;
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 16px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    .stApp {
+        background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
     }
-
-    .account-card:hover {
-        border-color: #7C3AED;
-        box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.3);
-        transform: translateY(-2px);
+    h1, h2, h3, h4, h5, h6, p, div, span {
+        color: #F8FAFC !important;
     }
-
-    .status-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .price-tag {
-        font-size: 24px;
-        font-weight: 800;
-        color: #10B981;
-        text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-    }
-
-    .resource-pill {
-        background: rgba(15, 23, 42, 0.8);
-        border: 1px solid #334155;
-        border-radius: 8px;
-        padding: 8px 12px;
-        text-align: center;
-        font-size: 13px;
-    }
-
-    .resource-pill .value {
-        font-size: 18px;
-        font-weight: 700;
+    .stMarkdown {
         color: #F8FAFC;
     }
-
-    .resource-pill .label {
-        font-size: 11px;
-        color: #94A3B8;
-        text-transform: uppercase;
+    .st-emotion-cache-1y4p8pa {
+        max-width: 1200px;
     }
-
-    .char-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(15, 23, 42, 0.9);
-        border: 1px solid;
-        border-radius: 8px;
-        padding: 6px 10px;
-        margin: 3px;
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .section-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #94A3B8;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin: 16px 0 8px 0;
-        border-bottom: 1px solid #334155;
-        padding-bottom: 4px;
-    }
-
-    .detail-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 6px 0;
-        border-bottom: 1px solid rgba(51, 65, 85, 0.3);
-        font-size: 14px;
-    }
-
-    .detail-row .label { color: #94A3B8; }
-    .detail-row .value { color: #F8FAFC; font-weight: 600; }
-
-    .progress-bar {
-        height: 6px;
-        background: #1E293B;
-        border-radius: 3px;
-        overflow: hidden;
-        margin-top: 4px;
-    }
-
-    .progress-fill {
-        height: 100%;
-        border-radius: 3px;
-        transition: width 0.5s ease;
-    }
-
-    .tag-pill {
-        display: inline-block;
-        background: #7C3AED;
-        color: white;
-        padding: 3px 10px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        margin: 2px;
-    }
-
-    .header-glow {
-        text-align: center;
-        padding: 40px 20px;
-        background: linear-gradient(180deg, rgba(124,58,237,0.15) 0%, transparent 100%);
-        border-radius: 0 0 24px 24px;
-        margin-bottom: 30px;
-    }
-
-    .timestamp {
-        text-align: center;
-        color: #64748B;
-        font-size: 12px;
-        margin-top: 40px;
-        padding: 20px;
-    }
-
-    /* Cores de elemento */
-    .el-pyro { border-color: #DC2626; color: #FCA5A5; }
-    .el-hydro { border-color: #0284C7; color: #7DD3FC; }
-    .el-electro { border-color: #7C3AED; color: #C4B5FD; }
-    .el-cryo { border-color: #38BDF8; color: #BAE6FD; }
-    .el-geo { border-color: #D97706; color: #FCD34D; }
-    .el-anemo { border-color: #0D9488; color: #5EEAD4; }
-    .el-dendro { border-color: #16A34A; color: #86EFAC; }
-
-    /* Status colors */
-    .st-disponivel { background: #059669; color: white; }
-    .st-reservada { background: #F59E0B; color: #111827; }
-    .st-vendida { background: #6B7280; color: white; }
-    .st-pausada { background: #7C3AED; color: white; }
-    .st-farmando { background: #0891B2; color: white; }
-    .st-revisar { background: #DC2626; color: white; }
 </style>
 """
 
 # ==========================================================
-# ELEMENTOS / UTILS
+# ELEMENTOS / CORES
 # ==========================================================
+ELEMENT_COLORS = {
+    "Pyro": "#DC2626", "Hydro": "#0284C7", "Electro": "#7C3AED",
+    "Cryo": "#38BDF8", "Geo": "#D97706", "Anemo": "#0D9488", "Dendro": "#16A34A"
+}
+
+STATUS_COLORS = {
+    "Disponível": "#059669", "Reservada": "#F59E0B", "Vendida": "#6B7280",
+    "Pausada": "#7C3AED", "Farmando": "#0891B2", "Revisar": "#DC2626"
+}
+
 ELEMENT_ICONS = {
     "Pyro": "🔥", "Hydro": "💧", "Electro": "⚡", "Cryo": "❄️",
     "Geo": "🟡", "Anemo": "🌪️", "Dendro": "🌿"
-}
-
-ELEMENT_CLASSES = {
-    "Pyro": "el-pyro", "Hydro": "el-hydro", "Electro": "el-electro",
-    "Cryo": "el-cryo", "Geo": "el-geo", "Anemo": "el-anemo", "Dendro": "el-dendro"
-}
-
-STATUS_CLASSES = {
-    "Disponível": "st-disponivel", "Reservada": "st-reservada", "Vendida": "st-vendida",
-    "Pausada": "st-pausada", "Farmando": "st-farmando", "Revisar": "st-revisar"
 }
 
 MAP_AREAS = [
@@ -218,7 +75,6 @@ MAP_AREAS = [
 # ==========================================================
 @st.cache_data(ttl=30)
 def fetch_accounts():
-    """Busca contas visíveis do Supabase."""
     if not SUPABASE_URL or not SUPABASE_KEY:
         return []
     try:
@@ -232,7 +88,6 @@ def fetch_accounts():
 
 
 def parse_json_field(data, field):
-    """Parseia campo JSON do Supabase."""
     try:
         val = data.get(field)
         if isinstance(val, str):
@@ -243,7 +98,6 @@ def parse_json_field(data, field):
 
 
 def parse_json_dict(data, field):
-    """Parseia campo JSON dict do Supabase."""
     try:
         val = data.get(field)
         if isinstance(val, str):
@@ -256,30 +110,8 @@ def parse_json_dict(data, field):
 # ==========================================================
 # COMPONENTES DE UI
 # ==========================================================
-def render_resource_pill(icon, label, value):
-    return f"""
-    <div class="resource-pill">
-        <div class="value">{icon} {value}</div>
-        <div class="label">{label}</div>
-    </div>
-    """
-
-
-def render_character_chip(char):
-    name = char.get("character_name", "?")
-    element = char.get("element", "")
-    constellation = char.get("constellation", "C0")
-    el_icon = ELEMENT_ICONS.get(element, "✦")
-    el_class = ELEMENT_CLASSES.get(element, "")
-    return f"""
-    <span class="char-chip {el_class}">
-        {el_icon} {name} <strong>{constellation}</strong>
-    </span>
-    """
-
-
 def render_account_card(account):
-    """Renderiza um card completo de conta."""
+    """Renderiza um card de conta usando componentes nativos do Streamlit."""
     name = account.get("name", "Conta sem nome")
     uid = account.get("uid", "-")
     server = account.get("server", "-")
@@ -304,113 +136,119 @@ def render_account_card(account):
     birthday = "Sim" if account.get("birthday_set") else "Não"
     abyss = "Sim" if account.get("abyss_unlocked") else "Não"
     extra = account.get("extra_info", "")
+    has_cover = account.get("has_cover", False)
 
-    status_class = STATUS_CLASSES.get(status, "")
-    status_badge = f'<span class="status-badge {status_class}">{status}</span>'
+    status_color = STATUS_COLORS.get(status, "#334155")
 
-    # Personagens chips
-    chars_html = " ".join([render_character_chip(c) for c in characters[:8]])
-    if len(characters) > 8:
-        chars_html += f'<span style="color:#64748B;font-size:12px;margin-left:6px;">+{len(characters)-8} mais</span>'
-
-    # Tags
-    tags_html = ""
-    if tags:
-        tag_list = [t.strip() for t in tags.split(",") if t.strip()]
-        tags_html = " ".join([f'<span class="tag-pill">{t}</span>' for t in tag_list])
-
-    # Recursos grid
-    resources_html = f"""
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;">
-        {render_resource_pill("💎", "Primogems", f"{primogems:,}")}
-        {render_resource_pill("🌠", "Limitados", intertwined)}
-        {render_resource_pill("⭐", "Padrão", acquaint)}
-        {render_resource_pill("✨", "Starglitter", starglitter)}
-        {render_resource_pill("🌙", "Stardust", stardust)}
-        {render_resource_pill("⚡", "Resina", resin)}
-    </div>
-    """
-
-    # Progresso de mapa
-    map_html = ""
-    for key, label in MAP_AREAS:
-        val = map_progress.get(key, 0)
-        if val > 0:
-            color = "#7C3AED" if val >= 80 else "#0DCAF0" if val >= 50 else "#94A3B8"
-            map_html += f"""
-            <div style="margin:4px 0;">
-                <div style="display:flex;justify-content:space-between;font-size:12px;">
-                    <span style="color:#CBD5E1;">{label}</span>
-                    <span style="color:{color};font-weight:700;">{val}%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width:{val}%;background:{color};"></div>
-                </div>
-            </div>
-            """
-
-    # Armas (detalhe)
-    weapons_html = ""
-    if weapons:
-        for w in weapons[:6]:
-            wname = w.get("weapon_name", "?")
-            wchar = w.get("character_name", "-")
-            wref = w.get("refinement", "R1")
-            weapons_html += f'<div class="detail-row"><span class="label">⚔️ {wname}</span><span class="value">{wchar} • {wref}</span></div>'
-        if len(weapons) > 6:
-            weapons_html += f'<div style="color:#64748B;font-size:12px;text-align:center;padding:4px;">+{len(weapons)-6} armas</div>'
-
-    # Card principal
-    card_html = f"""
-    <div class="account-card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
-            <div>
-                <h3 style="margin:0;color:#F8FAFC;font-size:20px;">{name}</h3>
-                <div style="color:#94A3B8;font-size:13px;margin-top:4px;">
-                    UID: {uid} • {server} • AR {ar} • WL {wl}
-                </div>
-            </div>
-            <div style="text-align:right;">
-                {status_badge}
-                <div class="price-tag" style="margin-top:8px;">{price}</div>
-            </div>
+    # CARD PRINCIPAL
+    with st.container():
+        # Container com borda customizada
+        st.markdown(f"""
+        <div style="background: rgba(30,41,59,0.9); border: 1px solid #334155; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
         </div>
+        """, unsafe_allow_html=True)
 
-        {tags_html}
-
-        <div class="section-title">Recursos</div>
-        {resources_html}
-
-        <div class="section-title">Personagens ({len(characters)})</div>
-        <div style="margin:8px 0;">{chars_html}</div>
-
-        <details style="margin-top:16px;">
-            <summary style="color:#7C3AED;font-weight:700;cursor:pointer;font-size:14px;">
-                🔍 Ver detalhes completos
-            </summary>
-            <div style="margin-top:12px;padding-top:12px;border-top:1px solid #334155;">
-
-                <div class="section-title">Progresso</div>
-                <div class="detail-row"><span class="label">Aniversário definido</span><span class="value">{birthday}</span></div>
-                <div class="detail-row"><span class="label">Abismo liberado</span><span class="value">{abyss}</span></div>
-                <div class="detail-row"><span class="label">Andar máximo</span><span class="value">{abyss_floor}</span></div>
-
-                <div class="section-title">Exploração</div>
-                {map_html if map_html else '<div style="color:#64748B;font-size:13px;">Sem dados de exploração</div>'}
-
-                <div class="section-title">Armas ({len(weapons)})</div>
-                {weapons_html if weapons_html else '<div style="color:#64748B;font-size:13px;">Sem armas cadastradas</div>'}
-
-                {f'<div class="section-title">Observações</div><div style="background:#0B1220;padding:12px;border-radius:8px;color:#CBD5E1;font-size:13px;white-space:pre-wrap;">{extra}</div>' if extra else ''}
-
-                <div style="margin-top:12px;text-align:center;">
-                    <span style="color:#64748B;font-size:12px;">Atualizado em: {account.get("updated_at", "-")[:16]}</span>
-                </div>
+        # Header: Nome + Status + Preço
+        col_header1, col_header2 = st.columns([3, 1])
+        with col_header1:
+            st.markdown(f"### {name}")
+            st.markdown(f"**UID:** {uid} • **Servidor:** {server} • **AR** {ar} • **WL** {wl}")
+        with col_header2:
+            # Status badge
+            st.markdown(f"""
+            <div style="background: {status_color}; color: white; padding: 6px 14px; border-radius: 20px; text-align: center; font-weight: bold; font-size: 13px; margin-bottom: 8px;">
+                {status.upper()}
             </div>
-        </details>
-    </div>
-    """
-    return card_html
+            """, unsafe_allow_html=True)
+            st.markdown(f"<h2 style='color: #10B981; text-align: center; margin: 0;'>💰 {price}</h2>", unsafe_allow_html=True)
+
+        # Tags
+        if tags:
+            tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+            tags_html = " ".join([f'<span style="background: #7C3AED; color: white; padding: 3px 10px; border-radius: 6px; font-size: 12px; margin-right: 5px;">{t}</span>' for t in tag_list])
+            st.markdown(tags_html, unsafe_allow_html=True)
+
+        st.divider()
+
+        # RECURSOS
+        st.markdown("**📦 Recursos**")
+        r1, r2, r3 = st.columns(3)
+        with r1:
+            st.metric("💎 Primogems", f"{primogems:,}")
+        with r2:
+            st.metric("🌠 Limitados", intertwined)
+        with r3:
+            st.metric("⭐ Padrão", acquaint)
+
+        r4, r5, r6 = st.columns(3)
+        with r4:
+            st.metric("✨ Starglitter", starglitter)
+        with r5:
+            st.metric("🌙 Stardust", stardust)
+        with r6:
+            st.metric("⚡ Resina", resin)
+
+        st.divider()
+
+        # PERSONAGENS
+        st.markdown(f"**🎭 Personagens ({len(characters)})**")
+        if characters:
+            char_cols = st.columns(min(len(characters), 6))
+            for idx, char in enumerate(characters[:6]):
+                with char_cols[idx % 6]:
+                    el = char.get("element", "")
+                    el_color = ELEMENT_COLORS.get(el, "#334155")
+                    el_icon = ELEMENT_ICONS.get(el, "✦")
+                    c_name = char.get("character_name", "?")
+                    c_const = char.get("constellation", "C0")
+                    st.markdown(f"""
+                    <div style="border: 2px solid {el_color}; border-radius: 10px; padding: 8px; text-align: center; background: rgba(15,23,42,0.6);">
+                        <div style="font-size: 20px;">{el_icon}</div>
+                        <div style="font-weight: bold; font-size: 13px; color: #F8FAFC;">{c_name}</div>
+                        <div style="color: {el_color}; font-size: 12px; font-weight: bold;">{c_const}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            if len(characters) > 6:
+                st.caption(f"+{len(characters)-6} personagens")
+
+        # DETALHES EXPANSÍVEIS
+        with st.expander("🔍 Ver detalhes completos"):
+            # Progresso
+            st.markdown("**📊 Progresso**")
+            prog_col1, prog_col2, prog_col3 = st.columns(3)
+            with prog_col1:
+                st.metric("Aniversário", birthday)
+            with prog_col2:
+                st.metric("Abismo", abyss)
+            with prog_col3:
+                st.metric("Andar máx.", abyss_floor)
+
+            # Exploração
+            st.markdown("**🗺️ Exploração**")
+            for key, label in MAP_AREAS:
+                val = map_progress.get(key, 0)
+                if val > 0:
+                    color = "#7C3AED" if val >= 80 else "#0DCAF0" if val >= 50 else "#94A3B8"
+                    st.progress(val / 100, text=f"{label} - {val}%")
+
+            # Armas
+            if weapons:
+                st.markdown(f"**⚔️ Armas ({len(weapons)})**")
+                for w in weapons[:6]:
+                    wname = w.get("weapon_name", "?")
+                    wchar = w.get("character_name", "-")
+                    wref = w.get("refinement", "R1")
+                    st.markdown(f"• **{wname}** ({wchar}) • {wref}")
+                if len(weapons) > 6:
+                    st.caption(f"+{len(weapons)-6} armas")
+
+            # Observações
+            if extra:
+                st.markdown("**📝 Observações**")
+                st.info(extra)
+
+            # Timestamp
+            st.caption(f"Atualizado em: {account.get('updated_at', '-')[:16]}")
 
 
 # ==========================================================
@@ -428,13 +266,9 @@ def main():
 
     # Header
     st.markdown("""
-    <div class="header-glow">
-        <h1 style="margin:0;color:#F8FAFC;font-size:42px;font-weight:800;">
-            ⚔️ Genshin Impact
-        </h1>
-        <p style="margin:8px 0 0 0;color:#94A3B8;font-size:18px;">
-            Contas disponíveis para venda • Atualizado em tempo real
-        </p>
+    <div style="text-align: center; padding: 30px 20px; background: linear-gradient(180deg, rgba(124,58,237,0.15) 0%, transparent 100%); border-radius: 0 0 24px 24px; margin-bottom: 30px;">
+        <h1 style="margin:0; color:#F8FAFC; font-size: 42px;">⚔️ Genshin Impact</h1>
+        <p style="margin:10px 0 0 0; color:#94A3B8; font-size: 18px;">Contas disponíveis para venda • Atualizado em tempo real</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -463,16 +297,16 @@ def main():
             ["Mais recente", "Menor preço", "Maior AR", "Mais personagens"]
         )
 
-        st.markdown("<hr style='border-color:#334155;'>", unsafe_allow_html=True)
+        st.divider()
 
         if st.button("🔄 Atualizar agora", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
 
         st.markdown("""
-        <div style="margin-top:30px;padding:16px;background:#1E293B;border-radius:12px;border:1px solid #334155;">
-            <h4 style="color:#F8FAFC;margin:0 0 8px 0;">📞 Contato</h4>
-            <p style="color:#94A3B8;font-size:13px;margin:0;">
+        <div style="margin-top:30px; padding:16px; background:#1E293B; border-radius:12px; border:1px solid #334155;">
+            <h4 style="color:#F8FAFC; margin:0 0 8px 0;">📞 Contato</h4>
+            <p style="color:#94A3B8; font-size:13px; margin:0;">
                 Interessado em alguma conta?<br>
                 Entre em contato pelo Discord/WhatsApp.<br><br>
                 <strong style="color:#7C3AED;">As contas são verificadas e entregues com segurança.</strong>
@@ -486,9 +320,9 @@ def main():
     if not accounts:
         st.warning("⚠️ Nenhuma conta disponível no momento. Volte em breve!")
         if not SUPABASE_URL:
-            st.error("🔧 Configuração incompleta: SUPABASE_URL não definido.")
+            st.error("🔧 Configuração incompleta: SUPABASE_URL não definido nos Secrets.")
         st.markdown("""
-        <div class="timestamp">
+        <div style="text-align:center; color:#64748B; font-size:12px; margin-top:40px; padding:20px;">
             Vitrine v2.0 • Genshin Account Manager Pro
         </div>
         """, unsafe_allow_html=True)
@@ -497,17 +331,13 @@ def main():
     # Filtros
     filtered = []
     for acc in accounts:
-        # Status
         if status_filter and acc.get("status") not in status_filter:
             continue
-        # Servidor
         if server_filter and acc.get("server") not in server_filter:
             continue
-        # AR
         ar = acc.get("ar", 0)
         if ar < min_ar or ar > max_ar:
             continue
-        # Busca textual
         if search:
             search_lower = search.lower()
             blob = f"{acc.get('name','')} {acc.get('uid','')} {acc.get('tags','')}"
@@ -520,7 +350,6 @@ def main():
 
     # Ordenação
     if price_sort == "Menor preço":
-        # Tenta extrair número do preço
         def extract_price(a):
             p = str(a.get("price", "0"))
             nums = "".join([c for c in p if c.isdigit() or c == "."])
@@ -535,7 +364,6 @@ def main():
         def count_chars(a):
             return len(parse_json_field(a, "characters_json"))
         filtered.sort(key=count_chars, reverse=True)
-    # else: mais recente (já vem ordenado do Supabase)
 
     # Stats
     total = len(filtered)
@@ -546,20 +374,18 @@ def main():
     col2.metric("Total de personagens 5★", total_5star)
     col3.metric("Servidores", len(set(a.get("server") for a in filtered)))
 
-    st.markdown("<hr style='border-color:#334155;margin:20px 0;'>", unsafe_allow_html=True)
+    st.divider()
 
     # Grid de cards
     if not filtered:
         st.info("Nenhuma conta encontrada com os filtros selecionados.")
     else:
-        cols = st.columns(2)
-        for idx, account in enumerate(filtered):
-            with cols[idx % 2]:
-                components.html(render_account_card(account), height=650)
+        for account in filtered:
+            render_account_card(account)
 
     # Footer
     st.markdown(f"""
-    <div class="timestamp">
+    <div style="text-align:center; color:#64748B; font-size:12px; margin-top:40px; padding:20px;">
         Vitrine v2.0 • Genshin Account Manager Pro • Última atualização: {datetime.now().strftime('%H:%M:%S')}<br>
         <span style="font-size:11px;">As informações são atualizadas automaticamente pelo vendedor.</span>
     </div>
