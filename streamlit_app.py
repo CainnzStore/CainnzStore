@@ -4,6 +4,7 @@ from datetime import datetime
 
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 
 # ==========================================================
 # CONFIGURAÇÃO DO SUPABASE (preencher ou usar secrets)
@@ -554,8 +555,7 @@ def main():
         cols = st.columns(2)
         for idx, account in enumerate(filtered):
             with cols[idx % 2]:
-                import streamlit.components.v1 as components
-                    components.html(render_account_card(account), height=600, scrolling=True)
+                components.html(render_account_card(account), height=650)
 
     # Footer
     st.markdown(f"""
