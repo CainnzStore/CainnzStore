@@ -19,28 +19,38 @@ HEADERS = {
 }
 
 # ==========================================================
-# CSS CUSTOMIZADO
+# CSS CUSTOMIZADO - TEMA ELEGANTE
 # ==========================================================
 CUSTOM_CSS = """
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+
     .main, .stApp {
-        background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+        background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%);
     }
-    h1, h2, h3, h4, h5, h6, p, div, span, label {
-        color: #F8FAFC !important;
-    }
+
     .st-emotion-cache-1y4p8pa {
         max-width: 1200px;
+        padding: 0 20px;
     }
-    .stButton>button {
-        background: #7C3AED;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 8px 16px;
+
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar {
+        width: 8px;
     }
-    .stButton>button:hover {
-        background: #6D28D9;
+    ::-webkit-scrollbar-track {
+        background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
     }
 </style>
 """
@@ -54,8 +64,8 @@ ELEMENT_COLORS = {
 }
 
 STATUS_COLORS = {
-    "Disponível": "#059669", "Reservada": "#F59E0B", "Vendida": "#6B7280",
-    "Pausada": "#7C3AED", "Farmando": "#0891B2", "Revisar": "#DC2626"
+    "Disponível": "#10B981", "Reservada": "#F59E0B", "Vendida": "#6B7280",
+    "Pausada": "#7C3AED", "Farmando": "#0891B2", "Revisar": "#EF4444"
 }
 
 ELEMENT_ICONS = {
@@ -113,10 +123,10 @@ def parse_json_dict(data, field):
 
 
 # ==========================================================
-# RENDERIZAR CARD DE CONTA
+# RENDERIZAR CARD COMPACTO
 # ==========================================================
-def render_account_card(account, idx):
-    """Renderiza um card compacto que expande ao clicar."""
+def render_compact_card(account, idx):
+    """Card compacto com imagem thumbnail, expande ao clicar."""
     name = account.get("name", "Conta sem nome")
     server = account.get("server", "-")
     status = account.get("status", "-")
@@ -144,74 +154,74 @@ def render_account_card(account, idx):
 
     status_color = STATUS_COLORS.get(status, "#334155")
 
-    # ===== CARD PRINCIPAL (COMPACTO) =====
+    # ===== CARD COMPACTO =====
     with st.container():
-        # Container visual
+        # Container principal com borda e sombra
         st.markdown(f"""
-        <div style="background: rgba(30,41,59,0.95); border: 1px solid #334155; 
-                    border-radius: 16px; padding: 0; margin-bottom: 16px; 
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.3); overflow: hidden;">
+        <div style="background: rgba(30,41,59,0.95); border: 1px solid rgba(124,58,237,0.2); 
+                    border-radius: 12px; overflow: hidden; margin-bottom: 16px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: all 0.3s;">
         </div>
         """, unsafe_allow_html=True)
 
-        # Header com imagem + info
-        header_cols = st.columns([1, 2]) if cover_b64 else st.columns([1])
-
+        # Layout: [Imagem pequena] [Info principal] [Preço/Status]
         if cover_b64:
-            with header_cols[0]:
-                try:
-                    # Detecta tipo da imagem
-                    img_data = base64.b64decode(cover_b64)
-                    st.image(img_data, use_container_width=True)
-                except Exception:
-                    st.markdown("<div style='background:#1E293B;height:150px;display:flex;align-items:center;justify-content:center;border-radius:12px;'><span style='color:#64748B;'>Sem imagem</span></div>", unsafe_allow_html=True)
+            cols = st.columns([1, 3, 1])
+        else:
+            cols = st.columns([4, 1])
 
-        with header_cols[-1]:
-            # Status badge
+        # IMAGEM THUMBNAIL (pequena, quadrada)
+        if cover_b64:
+            with cols[0]:
+                try:
+                    img_data = base64.b64decode(cover_b64)
+                    st.image(img_data, width=120, use_container_width=False)
+                except Exception:
+                    st.markdown("<div style='width:120px;height:120px;background:#1E293B;border-radius:8px;display:flex;align-items:center;justify-content:center;'><span style='color:#64748B;font-size:24px;'>📷</span></div>", unsafe_allow_html=True)
+
+        # INFO PRINCIPAL
+        with cols[-2]:
+            # Nome da conta
+            st.markdown(f"<h4 style='margin:0;color:#F8FAFC;font-weight:700;'>{name}</h4>", unsafe_allow_html=True)
+
+            # Server + AR + WL
+            st.markdown(f"<p style='margin:4px 0;color:#94A3B8;font-size:13px;'>🌐 {server} • ⭐ AR {ar} • WL {wl}</p>", unsafe_allow_html=True)
+
+            # Tags em pills pequenas
+            if tags:
+                tag_list = [t.strip() for t in tags.split(",") if t.strip()][:3]  # max 3 tags
+                tags_html = " ".join([f'<span style="background:rgba(124,58,237,0.3);color:#C4B5FD;padding:2px 8px;border-radius:4px;font-size:11px;margin-right:4px;border:1px solid rgba(124,58,237,0.5);">{t}</span>' for t in tag_list])
+                st.markdown(tags_html, unsafe_allow_html=True)
+
+            # Personagens em linha (só ícones + nomes curtos)
+            if characters:
+                char_html = ""
+                for char in characters[:5]:
+                    el = char.get("element", "")
+                    el_icon = ELEMENT_ICONS.get(el, "✦")
+                    c_name = char.get("character_name", "?")
+                    c_const = char.get("constellation", "")
+                    char_html += f'<span style="margin-right:10px;font-size:13px;">{el_icon} <strong>{c_name}</strong> <span style="color:#94A3B8;font-size:11px;">{c_const}</span></span>'
+                if len(characters) > 5:
+                    char_html += f'<span style="color:#64748B;font-size:12px;">+{len(characters)-5}</span>'
+                st.markdown(f"<p style='margin:8px 0 0 0;'>{char_html}</p>", unsafe_allow_html=True)
+
+        # PREÇO + STATUS
+        with cols[-1]:
             st.markdown(f"""
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <h3 style="margin:0;color:#F8FAFC;">{name}</h3>
-                <span style="background:{status_color};color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;">
+            <div style="text-align:right;">
+                <div style="background:{status_color};color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;display:inline-block;margin-bottom:8px;">
                     {status.upper()}
-                </span>
+                </div>
+                <div style="color:#10B981;font-size:22px;font-weight:800;">
+                    {price}
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
-            st.markdown(f"<p style='color:#94A3B8;margin:0;'>🌐 {server} • ⭐ AR {ar} • WL {wl}</p>", unsafe_allow_html=True)
-
-            # Preço
-            st.markdown(f"<h2 style='color:#10B981;margin:8px 0;'>💰 {price}</h2>", unsafe_allow_html=True)
-
-            # Tags
-            if tags:
-                tag_list = [t.strip() for t in tags.split(",") if t.strip()]
-                tags_html = " ".join([f'<span style="background:#7C3AED;color:white;padding:3px 10px;border-radius:6px;font-size:12px;margin-right:5px;">{t}</span>' for t in tag_list])
-                st.markdown(tags_html, unsafe_allow_html=True)
-
-        # Personagens em chips (visível no card principal)
-        if characters:
-            st.markdown(f"<p style='color:#94A3B8;margin:12px 0 8px 0;font-size:14px;'>🎭 {len(characters)} personagens</p>", unsafe_allow_html=True)
-            char_cols = st.columns(min(len(characters), 6))
-            for i, char in enumerate(characters[:6]):
-                with char_cols[i]:
-                    el = char.get("element", "")
-                    el_color = ELEMENT_COLORS.get(el, "#334155")
-                    el_icon = ELEMENT_ICONS.get(el, "✦")
-                    c_name = char.get("character_name", "?")
-                    c_const = char.get("constellation", "C0")
-                    st.markdown(f"""
-                    <div style="border: 2px solid {el_color}; border-radius: 10px; padding: 6px; text-align: center; background: rgba(15,23,42,0.6);">
-                        <div style="font-size: 18px;">{el_icon}</div>
-                        <div style="font-weight: bold; font-size: 12px; color: #F8FAFC;">{c_name}</div>
-                        <div style="color: {el_color}; font-size: 11px; font-weight: bold;">{c_const}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-            if len(characters) > 6:
-                st.caption(f"+{len(characters)-6} personagens")
-
-        # ===== DETALHES EXPANSÍVEIS =====
-        with st.expander("🔍 Clique para ver detalhes completos"):
-            # Recursos
+        # ===== EXPANSOR DE DETALHES =====
+        with st.expander("🔍 Ver detalhes completos"):
+            # Recursos em grid
             st.markdown("**📦 Recursos**")
             r1, r2, r3 = st.columns(3)
             with r1:
@@ -232,21 +242,21 @@ def render_account_card(account, idx):
             st.divider()
 
             # Progresso
-            st.markdown("**📊 Progresso da Conta**")
-            prog_col1, prog_col2, prog_col3 = st.columns(3)
-            with prog_col1:
+            st.markdown("**📊 Progresso**")
+            pc1, pc2, pc3 = st.columns(3)
+            with pc1:
                 st.metric("🎂 Aniversário", birthday)
-            with prog_col2:
+            with pc2:
                 st.metric("🏰 Abismo", abyss)
-            with prog_col3:
+            with pc3:
                 st.metric("📈 Andar máx.", abyss_floor)
 
             # Exploração
-            st.markdown("**🗺️ Exploração por Região**")
+            st.markdown("**🗺️ Exploração**")
             for key, label in MAP_AREAS:
                 val = map_progress.get(key, 0)
                 if val > 0:
-                    color = "#7C3AED" if val >= 80 else "#0DCAF0" if val >= 50 else "#94A3B8"
+                    color = "#7C3AED" if val >= 80 else "#0DCAF0" if val >= 50 else "#64748B"
                     st.progress(val / 100, text=f"{label} - {val}%")
 
             # Armas
@@ -262,11 +272,8 @@ def render_account_card(account, idx):
 
             # Observações
             if extra:
-                st.markdown("**📝 Observações do Vendedor**")
+                st.markdown("**📝 Observações**")
                 st.info(extra)
-
-            # Timestamp
-            st.caption(f"🕐 Atualizado em: {account.get('updated_at', '-')[:16]}")
 
 
 # ==========================================================
@@ -277,73 +284,72 @@ def main():
         page_title="Genshin Impact - Contas à Venda",
         page_icon="⚔️",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="collapsed"
     )
 
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-    # Header
+    # Header elegante
     st.markdown("""
-    <div style="text-align: center; padding: 30px 20px; background: linear-gradient(180deg, rgba(124,58,237,0.15) 0%, transparent 100%); border-radius: 0 0 24px 24px; margin-bottom: 30px;">
-        <h1 style="margin:0; color:#F8FAFC; font-size: 42px;">⚔️ Genshin Impact</h1>
-        <p style="margin:10px 0 0 0; color:#94A3B8; font-size: 18px;">Contas disponíveis para venda • Atualizado em tempo real</p>
+    <div style="text-align: center; padding: 40px 20px 30px; margin-bottom: 30px;">
+        <h1 style="margin:0; color:#F8FAFC; font-size: 38px; font-weight: 800; letter-spacing: -0.5px;">
+            ⚔️ Catálogo de Contas
+        </h1>
+        <p style="margin:8px 0 0 0; color:#94A3B8; font-size: 16px;">
+            Genshin Impact • Contas verificadas e entregues com segurança
+        </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Sidebar - Filtros
-    with st.sidebar:
-        st.markdown("<h2 style='color:#F8FAFC;'>🔍 Filtros</h2>", unsafe_allow_html=True)
+    # Botão de filtros (sidebar colapsada por padrão)
+    col_filter, col_count = st.columns([1, 3])
+    with col_filter:
+        if st.button("🔍 Filtros", use_container_width=True):
+            st.session_state.show_filters = not st.session_state.get("show_filters", False)
 
-        search = st.text_input("Buscar por nome ou personagem", "")
+    # Sidebar de filtros (condicional)
+    if st.session_state.get("show_filters", False):
+        with st.sidebar:
+            st.markdown("<h3 style='color:#F8FAFC;'>Filtros</h3>", unsafe_allow_html=True)
 
-        status_filter = st.multiselect(
-            "Status",
-            ["Disponível", "Reservada", "Vendida", "Pausada", "Farmando", "Revisar"],
-            default=["Disponível"]
-        )
+            search = st.text_input("Buscar", "")
 
-        server_filter = st.multiselect(
-            "Servidor",
-            ["America", "Europe", "Asia", "TW/HK/MO", "Outro"],
-            default=[]
-        )
+            status_filter = st.multiselect(
+                "Status",
+                ["Disponível", "Reservada", "Vendida", "Pausada", "Farmando", "Revisar"],
+                default=["Disponível"]
+            )
 
-        min_ar, max_ar = st.slider("Adventure Rank (AR)", 1, 60, (1, 60))
+            server_filter = st.multiselect(
+                "Servidor",
+                ["America", "Europe", "Asia", "TW/HK/MO", "Outro"],
+                default=[]
+            )
 
-        price_sort = st.selectbox(
-            "Ordenar por",
-            ["Mais recente", "Menor preço", "Maior AR", "Mais personagens"]
-        )
+            min_ar, max_ar = st.slider("AR", 1, 60, (1, 60))
 
-        st.divider()
+            price_sort = st.selectbox(
+                "Ordenar",
+                ["Mais recente", "Menor preço", "Maior AR", "Mais personagens"]
+            )
 
-        if st.button("🔄 Atualizar agora", use_container_width=True):
-            st.cache_data.clear()
-            st.rerun()
-
-        st.markdown("""
-        <div style="margin-top:30px; padding:16px; background:#1E293B; border-radius:12px; border:1px solid #334155;">
-            <h4 style="color:#F8FAFC; margin:0 0 8px 0;">📞 Contato</h4>
-            <p style="color:#94A3B8; font-size:13px; margin:0;">
-                Interessado em alguma conta?<br>
-                Entre em contato pelo Discord/WhatsApp.<br><br>
-                <strong style="color:#7C3AED;">As contas são verificadas e entregues com segurança.</strong>
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+            if st.button("🔄 Atualizar", use_container_width=True):
+                st.cache_data.clear()
+                st.rerun()
+    else:
+        search = ""
+        status_filter = ["Disponível"]
+        server_filter = []
+        min_ar, max_ar = (1, 60)
+        price_sort = "Mais recente"
 
     # Buscar dados
     accounts = fetch_accounts()
 
     if not accounts:
-        st.warning("⚠️ Nenhuma conta disponível no momento. Volte em breve!")
+        st.warning("⚠️ Nenhuma conta disponível no momento.")
         if not SUPABASE_URL:
-            st.error("🔧 Configuração incompleta: SUPABASE_URL não definido nos Secrets.")
-        st.markdown("""
-        <div style="text-align:center; color:#64748B; font-size:12px; margin-top:40px; padding:20px;">
-            Vitrine v3.0 • Genshin Account Manager Pro
-        </div>
-        """, unsafe_allow_html=True)
+            st.error("🔧 SUPABASE_URL não definido.")
         return
 
     # Filtros
@@ -383,28 +389,23 @@ def main():
             return len(parse_json_field(a, "characters_json"))
         filtered.sort(key=count_chars, reverse=True)
 
-    # Stats (apenas contagem de contas, não total de personagens)
-    total = len(filtered)
-
-    col1, col2 = st.columns(2)
-    col1.metric("📦 Contas disponíveis", total)
-    col2.metric("🌐 Servidores", len(set(a.get("server") for a in filtered)))
+    # Contador
+    with col_count:
+        st.markdown(f"<p style='text-align:right;color:#94A3B8;margin:0;padding-top:10px;'>📦 {len(filtered)} contas encontradas</p>", unsafe_allow_html=True)
 
     st.divider()
 
     # Grid de cards
     if not filtered:
-        st.info("Nenhuma conta encontrada com os filtros selecionados.")
+        st.info("Nenhuma conta encontrada com os filtros.")
     else:
         for idx, account in enumerate(filtered):
-            render_account_card(account, idx)
-            st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+            render_compact_card(account, idx)
 
     # Footer
     st.markdown(f"""
-    <div style="text-align:center; color:#64748B; font-size:12px; margin-top:40px; padding:20px;">
-        Vitrine v3.0 • Genshin Account Manager Pro • Última atualização: {datetime.now().strftime('%H:%M:%S')}<br>
-        <span style="font-size:11px;">As informações são atualizadas automaticamente pelo vendedor.</span>
+    <div style="text-align:center; color:#64748B; font-size:12px; margin-top:40px; padding:20px; border-top:1px solid #1E293B;">
+        Genshin Account Manager Pro • Última atualização: {datetime.now().strftime('%H:%M:%S')}
     </div>
     """, unsafe_allow_html=True)
 
