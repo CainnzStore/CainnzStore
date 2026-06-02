@@ -554,7 +554,8 @@ def main():
         cols = st.columns(2)
         for idx, account in enumerate(filtered):
             with cols[idx % 2]:
-                st.markdown(render_account_card(account), unsafe_allow_html=True)
+                import streamlit.components.v1 as components
+                    components.html(render_account_card(account), height=600, scrolling=True)
 
     # Footer
     st.markdown(f"""
