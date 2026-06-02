@@ -37,7 +37,7 @@ CSS_GLOBAL = """
         max-width: 1200px;
     }
 
-    /* Esconder label do expander */
+    /* Padronizar fontes no expander */
     .streamlit-expanderHeader {
         font-size: 0px !important;
         padding: 0px !important;
@@ -49,6 +49,11 @@ CSS_GLOBAL = """
     .streamlit-expanderContent {
         border: none !important;
         padding: 0px !important;
+    }
+
+    /* Forçar tamanho de fonte uniforme */
+    .stMarkdown p, .stMarkdown div, .stMarkdown span {
+        font-size: 14px !important;
     }
 </style>
 """
@@ -176,26 +181,20 @@ def render_account_card(account):
 
         # INFO
         with cols[-2]:
-            # Status badge pequeno
             st.markdown(f"""
             <div style="display:inline-block;background:{status_color};color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">
                 {status}
             </div>
             """, unsafe_allow_html=True)
 
-            # Nome da conta
             st.markdown(f"<h4 style='margin:0;color:#F8FAFC;font-weight:700;'>{name}</h4>", unsafe_allow_html=True)
-
-            # Server + AR + WL
             st.markdown(f"<p style='margin:4px 0;color:#94A3B8;font-size:13px;'>🌐 {server} • ⭐ AR {ar} • WL {wl}</p>", unsafe_allow_html=True)
 
-            # Tags
             if tags:
                 tag_list = [t.strip() for t in tags.split(",") if t.strip()][:3]
                 tags_html = " ".join([f'<span style="background:rgba(124,58,237,0.2);color:#A78BFA;padding:2px 8px;border-radius:4px;font-size:11px;margin-right:4px;">{t}</span>' for t in tag_list])
                 st.markdown(tags_html, unsafe_allow_html=True)
 
-            # Personagens em linha
             if characters:
                 char_html = ""
                 for char in characters[:5]:
@@ -220,37 +219,63 @@ def render_account_card(account):
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Expander para detalhes
+        # Expander para detalhes - TUDO COM FONTE PADRÃO
         with st.expander("🔍 Ver detalhes"):
-            # Recursos
+            # Recursos - usando texto simples em vez de st.metric
             st.markdown("**📦 Recursos**")
-            r1, r2, r3 = st.columns(3)
-            with r1:
-                st.metric("💎 Primogems", f"{primogems:,}")
-            with r2:
-                st.metric("🌠 Limitados", intertwined)
-            with r3:
-                st.metric("⭐ Padrão", acquaint)
 
-            r4, r5, r6 = st.columns(3)
-            with r4:
-                st.metric("✨ Starglitter", starglitter)
-            with r5:
-                st.metric("🌙 Stardust", stardust)
-            with r6:
-                st.metric("⚡ Resina", resin)
+            # Grid de recursos com texto uniforme
+            recursos_html = f"""
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0;">
+                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
+                    <div style="font-size:14px;color:#94A3B8;">💎 Primogems</div>
+                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{primogems:,}</div>
+                </div>
+                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
+                    <div style="font-size:14px;color:#94A3B8;">🌠 Limitados</div>
+                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{intertwined}</div>
+                </div>
+                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
+                    <div style="font-size:14px;color:#94A3B8;">⭐ Padrão</div>
+                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{acquaint}</div>
+                </div>
+                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
+                    <div style="font-size:14px;color:#94A3B8;">✨ Starglitter</div>
+                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{starglitter}</div>
+                </div>
+                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
+                    <div style="font-size:14px;color:#94A3B8;">🌙 Stardust</div>
+                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{stardust}</div>
+                </div>
+                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
+                    <div style="font-size:14px;color:#94A3B8;">⚡ Resina</div>
+                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{resin}</div>
+                </div>
+            </div>
+            """
+            st.markdown(recursos_html, unsafe_allow_html=True)
 
             st.divider()
 
-            # Progresso
+            # Progresso - texto uniforme
             st.markdown("**📊 Progresso**")
-            pc1, pc2, pc3 = st.columns(3)
-            with pc1:
-                st.metric("🎂 Aniversário", birthday)
-            with pc2:
-                st.metric("🏰 Abismo", abyss)
-            with pc3:
-                st.metric("📈 Andar máx.", abyss_floor)
+            progresso_html = f"""
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0;">
+                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
+                    <div style="font-size:14px;color:#94A3B8;">🎂 Aniversário</div>
+                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{birthday}</div>
+                </div>
+                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
+                    <div style="font-size:14px;color:#94A3B8;">🏰 Abismo</div>
+                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{abyss}</div>
+                </div>
+                <div style="background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:10px;">
+                    <div style="font-size:14px;color:#94A3B8;">📈 Andar máx.</div>
+                    <div style="font-size:18px;color:#F8FAFC;font-weight:700;">{abyss_floor}</div>
+                </div>
+            </div>
+            """
+            st.markdown(progresso_html, unsafe_allow_html=True)
 
             # Exploração
             st.markdown("**🗺️ Exploração**")
@@ -267,14 +292,14 @@ def render_account_card(account):
                     wname = w.get("weapon_name", "?")
                     wchar = w.get("character_name", "-")
                     wref = w.get("refinement", "R1")
-                    st.markdown(f"• **{wname}** ({wchar}) • {wref}")
+                    st.markdown(f"<p style='font-size:14px;margin:4px 0;'>• <strong>{wname}</strong> ({wchar}) {wref}</p>", unsafe_allow_html=True)
                 if len(weapons) > 8:
-                    st.caption(f"+{len(weapons)-8} armas")
+                    st.markdown(f"<p style='font-size:14px;color:#64748B;'>+{len(weapons)-8} armas</p>", unsafe_allow_html=True)
 
             # Observações
             if extra:
                 st.markdown("**📝 Observações**")
-                st.info(extra)
+                st.markdown(f"<div style='background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;padding:12px;font-size:14px;color:#CBD5E1;white-space:pre-wrap;'>{extra}</div>", unsafe_allow_html=True)
 
         st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
